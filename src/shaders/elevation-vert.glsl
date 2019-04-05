@@ -16,9 +16,9 @@ out vec3 fs_Nor;
 
 /*
 Samples the terrain at the given unit in world units.
+The world plane is 10x10.
 */
 vec2 sample_terrain(vec2 world_pos) {
-  // the plane is 10x10
   float terrain_scale = 10.0;
   vec2 uv = (world_pos / terrain_scale + 0.5);
   vec4 coord = texture(u_tex, uv);
@@ -32,15 +32,22 @@ void main()
   float land_h = terrain_sample.x;
   float pop_den = terrain_sample.y;
 
-  vec4 pos = vec4(vs_Pos.xyz, 1.0);
+  float max_h = 0.2;
+  float amt_land = smoothstep(0.4,0.5,land_h);
+  float out_h = max_h*amt_land - max_h;
+
+  vec4 pos = vec4(vs_Pos.x, out_h, vs_Pos.z, 1.0);
   fs_Pos = pos;
 
   // TODO set from gradient
   //fs_Nor = normalize(vs_Nor.xyz);
   fs_Nor = vec3(0.0,1.0,0.0);
 
-  //vec3 col = vec3(1.0,0.0,0.0);
-  vec3 col = vec3(land_h);
+  vec3 land_color = vec3(0.0,0.5,0.0);
+  vec3 water_color = vec3(0.0,0.0,0.5);
+  vec3 col = mix(water_color, land_color, amt_land);
+
+  //col = vec3(land_h);
   //col = vec3(vs_Pos.x / terrain_scale + 0.5);
   //col = vec3(sample_pos.y);
 
