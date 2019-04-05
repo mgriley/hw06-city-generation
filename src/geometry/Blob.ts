@@ -27,32 +27,6 @@ function generate_mesh(samples_x, samples_y, attr_func): any {
       }
     }
   }
-  // normals (eh, too toublesome to generate like this)
-  /*
-  for (let y = 0; y < samples_y; ++y) {
-    for (let x = 0; x < samples_x; ++x) {
-      let pa = positions[idx(x, y)];
-      let pb = positions[idx(x + 1, y)];
-      let pc = positions[idx(x, y + 1)];
-
-      let res = vec3.create();
-      let a = vec3.fromValues(...pa);
-      let b = vec3.fromValues(...pb);
-      let c = vec3.fromValues(...pc);
-      let ba = vec3.create();
-      let ca = vec3.create();
-      vec3.subtract(ba, b, a);
-      vec3.normalize(ba, ba);
-      vec3.subtract(ca, c, a);
-      vec3.normalize(ca, ca);
-      vec3.cross(res, ba, ca);
-      vec3.negate(res, res);
-      vec3.normalize(res, res);
-
-      normals.push(res);
-    }
-  }
-  */
   return [indices, positions, normals]
 }
 

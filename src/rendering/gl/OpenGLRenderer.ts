@@ -102,12 +102,10 @@ export class OpenGLRenderer {
 
     elevation_prog.draw(plane_drawable);
 
-    /*
     instanced_drawables = controls.bool_a ? [] : instanced_drawables;
     for (let drawable of instanced_drawables) {
       instanced_prog.draw(drawable);
     }
-     */
   }
 };
 

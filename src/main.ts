@@ -8,7 +8,7 @@ import {OpenGLRenderer, RENDER_TEX_LEN} from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
 import {setGL} from './globals';
 import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
-import {generate_scene} from './turtle';
+import {TERRAIN_SCALE, generate_scene} from './turtle';
 
 // Define an object with application parameters and button callbacks
 // This will be referred to by dat.GUI's functions that add GUI elements.
@@ -29,7 +29,7 @@ let time: number = 0.0;
 function regenerate_city(gl: WebGL2RenderingContext, canvas, renderer: OpenGLRenderer, inputs_shader: ShaderProgram) {
   screenQuad = new ScreenQuad();
   screenQuad.create();
-  planeDrawable = new Plane(vec3.fromValues(0,0,0), vec2.fromValues(10.0,10.0), 20);
+  planeDrawable = new Plane(vec3.fromValues(0,0,0), vec2.fromValues(TERRAIN_SCALE,TERRAIN_SCALE), 20);
   planeDrawable.create();
 
   // generate the input image (height and population)
@@ -42,9 +42,9 @@ function regenerate_city(gl: WebGL2RenderingContext, canvas, renderer: OpenGLRen
 
   // returns [land_height, pop_den]
   function map_sampler(x, y) {
-    // assume x and y are in [-1,1]
-    let abs_x = Math.floor((RENDER_TEX_LEN - 1) * 0.5*(x+1));
-    let abs_y = Math.floor((RENDER_TEX_LEN - 1) * 0.5*(y+1));
+    // assume x and y are in [0,1]
+    let abs_x = Math.floor((RENDER_TEX_LEN - 1) * x);
+    let abs_y = Math.floor((RENDER_TEX_LEN - 1) * y);
     let pt_index = 4 * (abs_y * RENDER_TEX_LEN + abs_x);
     let land_h = map_data[pt_index];
     let pop_den = map_data[pt_index + 1];

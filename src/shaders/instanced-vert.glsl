@@ -3,9 +3,9 @@
 uniform mat4 u_ViewProj;
 uniform float u_Time;
 
-in vec4 vs_Pos; // Non-instanced; each particle is the same quad drawn in a different place
+in vec4 vs_Pos;
 in vec4 vs_Nor;
-in vec2 vs_UV; // Non-instanced, and presently unused in main(). Feel free to use it for your meshes.
+in vec2 vs_UV;
 
 // per instance
 in vec4 vs_Col;
@@ -49,6 +49,5 @@ void main()
     fs_Pos = pos;
     fs_Nor = normalize(nor.xyz);
     // TODO - just extract the required components, no need for viewproj
-    //gl_Position = u_ViewProj * pos;
-    gl_Position = pos;
+    gl_Position = u_ViewProj * pos;
 }
