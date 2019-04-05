@@ -1,9 +1,10 @@
-import {vec3} from 'gl-matrix';
+import {vec2, vec3} from 'gl-matrix';
 import * as Stats from 'stats-js';
 import * as DAT from 'dat-gui';
 import Square from './geometry/Square';
 import ScreenQuad from './geometry/ScreenQuad';
-import OpenGLRenderer from './rendering/gl/OpenGLRenderer';
+import Plane from './geometry/Plane';
+import {OpenGLRenderer, RENDER_TEX_LEN} from './rendering/gl/OpenGLRenderer';
 import Camera from './Camera';
 import {setGL} from './globals';
 import ShaderProgram, {Shader} from './rendering/gl/ShaderProgram';
@@ -21,34 +22,39 @@ const controls = {
 };
 
 let screenQuad: ScreenQuad;
+let planeDrawable: Plane;
 let scene_drawables;
 let time: number = 0.0;
 
 function regenerate_city(gl: WebGL2RenderingContext, canvas, renderer: OpenGLRenderer, inputs_shader: ShaderProgram) {
   screenQuad = new ScreenQuad();
   screenQuad.create();
+  planeDrawable = new Plane(vec3.fromValues(0,0,0), vec2.fromValues(10.0,10.0), 20);
+  planeDrawable.create();
 
   // generate the input image (height and population)
   inputs_shader.setControls(controls);
   renderer.renderInputMaps(inputs_shader, screenQuad);
 
-  // extract map data from FBO
-  let w = window.innerWidth;
-  let h = window.innerHeight;
-  let map_data = new Float32Array(4 * w * h);
-  gl.readPixels(0, 0, w, h, gl.RGBA, gl.FLOAT, map_data);
-  //console.log(map_data);
+  let map_data = new Float32Array(4 * RENDER_TEX_LEN * RENDER_TEX_LEN);
+  gl.readPixels(0, 0, RENDER_TEX_LEN, RENDER_TEX_LEN, gl.RGBA, gl.FLOAT, map_data);
+  console.log(map_data);
 
   // returns [land_height, pop_den]
   function map_sampler(x, y) {
     // assume x and y are in [-1,1]
-    let abs_x = Math.floor(w * 0.5*(x+1));
-    let abs_y = Math.floor(h * 0.5*(y+1));
-    let pt_index = 4 * (abs_y * w + abs_x);
+    let abs_x = Math.floor((RENDER_TEX_LEN - 1) * 0.5*(x+1));
+    let abs_y = Math.floor((RENDER_TEX_LEN - 1) * 0.5*(y+1));
+    let pt_index = 4 * (abs_y * RENDER_TEX_LEN + abs_x);
     let land_h = map_data[pt_index];
     let pop_den = map_data[pt_index + 1];
     return [land_h, pop_den];
   }
+
+  // TODO - for debug
+  console.log('(-1,-1): ', map_sampler(-1, -1));
+  console.log('(-1, 1): ', map_sampler(-1, 1));
+  console.log('(1, 1): ', map_sampler(1, 1));
   
   scene_drawables = generate_scene(map_sampler);
 }
@@ -87,7 +93,7 @@ function main() {
   // Later, we can import `gl` from `globals.ts` to access it
   setGL(gl);
 
-  const camera = new Camera(vec3.fromValues(0, 10, -10), vec3.fromValues(0, 0, 0));
+  const camera = new Camera(vec3.fromValues(10, 10, -10), vec3.fromValues(0, 0, 0));
   //camera.controls.eye = [10, 10, -10];
 
   const renderer = new OpenGLRenderer(canvas, window.innerWidth, window.innerHeight);
@@ -98,9 +104,9 @@ function main() {
     new Shader(gl.FRAGMENT_SHADER, require('./shaders/inputs-frag.glsl')),
   ]);
 
-  const debugShader = new ShaderProgram([
-    new Shader(gl.VERTEX_SHADER, require('./shaders/terrain-vert.glsl')),
-    new Shader(gl.FRAGMENT_SHADER, require('./shaders/terrain-frag.glsl')),
+  const backgroundShader = new ShaderProgram([
+    new Shader(gl.VERTEX_SHADER, require('./shaders/background-vert.glsl')),
+    new Shader(gl.FRAGMENT_SHADER, require('./shaders/background-frag.glsl')),
   ]);
 
   const elevationShader = new ShaderProgram([
@@ -120,14 +126,18 @@ function main() {
     camera.update();
     stats.begin();
 
+    //console.log('camera eye: ', camera.controls.eye);
+    //console.log('camera center: ', camera.controls.center);
+
     renderer.renderScene(
       time, controls,
       camera,
       inputMapShader,
-      debugShader,
+      backgroundShader,
       elevationShader,
       instancedShader,
       screenQuad,
+      planeDrawable,
       scene_drawables
     );
 

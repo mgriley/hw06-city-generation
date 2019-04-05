@@ -16,8 +16,10 @@ void main()
   float df = clamp(dot(fs_Nor.xyz, light_dir), 0.0, 1.0);
   vec3 col = df * fs_Col.rgb;
 
+  //col = vec3(0.0,1.0,0.0);
   //col = fs_Nor.xyz;
+  col = fs_Col.xyz;
 
-  out_Col = vec4(col,1.0);
+  out_Col = vec4(col, 1.0);
 }
 

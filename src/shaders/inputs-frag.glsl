@@ -4,8 +4,6 @@ precision highp float;
 uniform bvec3 u_bin;
 uniform vec3 u_fin;
 
-uniform vec3 u_Eye, u_Ref, u_Up;
-uniform vec2 u_Dimensions;
 uniform float u_Time;
 
 in vec2 fs_Pos;
@@ -42,13 +40,20 @@ float surflet_noise(vec2 p, vec2 seed) {
   return (sum + 1.0) / 2.0;
 }
 
+vec2 sample_map(vec2 pos) {
+  float height = surflet_noise(30.0*pos, vec2(10.0, 21.0));
+  float pop_density = surflet_noise(30.0*pos, vec2(75.0, 89.0));
+  return vec2(height, pop_density);
+}
+
 void main() {
-
-  float height = surflet_noise(30.0*fs_Pos, vec2(10.0, 21.0));
-  float pop_density = surflet_noise(30.0*fs_Pos, vec2(75.0, 89.0));
-
+  vec2 params = sample_map(fs_Pos);
+  float height = params.x;
+  float pop_density = params.y;
+  
   vec3 col = vec3(height, pop_density, 0.0);
   //col = vec3(0.0,0.2,0.0);
+  //col = vec3(0.5*(fs_Pos.xy + 1.0), 0.0);
 
   out_Col = vec4(col, 1.0);
 }
