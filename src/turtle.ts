@@ -6,6 +6,11 @@ import {Blob, generate_mesh} from './geometry/Blob';
 // (where the height and population density are generated)
 export let TERRAIN_SCALE = 10.0;
 
+// the validity grid spans [-l/2, l/2]^2 in world units
+let GRID_WORLD_LEN = 10.0;
+// num points per world unit
+let GRID_RES = 10;
+
 function v2(x, y) {
   return vec2.fromValues(x, y);
 }
@@ -125,10 +130,13 @@ function intersect_road(line_a, line_b) {
 }
 
 // world_pos is a vec2
+// [-terr_scale/2, terr_scale/2]^2 maps to [-0.5,0.5]^2 in noise space,
+// which must then be mapped to [0,1]^2 to sample the noise texture
 // returns [land_h, pop_den]
 function sample_at_world_pos(map_sampler, world_pos) {
   let sample_pos = vec2.scale(v2e(), world_pos, 1.0 / TERRAIN_SCALE);
-  return map_sampler(sample_pos);
+  let norm_pos = vec2.add(v2e(), sample_pos, v2(0.5,0.5));
+  return map_sampler(norm_pos[0], norm_pos[1]);
 }
 
 // the rect spans [0,-0.5] to [1,0.5] in the xz plane. y is just above 0.
@@ -138,6 +146,71 @@ function gen_road_sample(x, y): any {
   let pos = v3(x, 0.01, y_pos);
   let nor = v3(0,1,0);
   return [pos, nor];
+}
+
+function grid_to_world_pos(grid_x, grid_y) {
+  let grid_len = GRID_WORLD_LEN * GRID_RES;
+  let world_x = (grid_x / grid_len - 0.5) * GRID_WORLD_LEN;
+  let world_z = (grid_y / grid_len - 0.5) * GRID_WORLD_LEN;
+  return v2(world_x, world_z);
+}
+
+function generate_validity_grid(map_sampler, roads) {
+  let grid = new Array(GRID_WORLD_LEN * GRID_RES);
+  for (let col_index = 0; col_index < grid.length; ++col_index) {
+    grid[col_index] = new Array(GRID_WORLD_LEN * GRID_RES);
+    for (let row_index = 0; row_index < grid[col_index].length; ++row_index) {
+      let world_pos = grid_to_world_pos(col_index, row_index);
+      let terr_sample = sample_at_world_pos(map_sampler, world_pos);
+      let land_h = terr_sample[0];
+      let pop_den = terr_sample[1];
+
+      grid[col_index][row_index] = [land_h, pop_den, world_pos];
+    }
+  }
+  return grid;
+}
+
+function gen_square_sample(x, y): any {
+  let pos = v3(x, 0, y);
+  let nor = v3(0, 1, 0);
+  return [pos, nor];
+}
+
+// for debugging
+function generate_grid_drawable(grid) {
+  let square_data = {
+    positions: [],
+    rotations: [],
+    scales: [],
+    colors: []
+  };
+  for (let col = 0; col < grid.length; ++col) {
+    for (let row = 0; row < grid[col].length; ++row) {
+      let grid_pt = grid[col][row];
+      let world_pos = grid_pt[2];
+
+      square_data.positions.push([world_pos[0], 0.1, world_pos[1]]);
+      square_data.rotations.push([0,0,1,0]);
+      let square_len = GRID_WORLD_LEN / grid.length;
+      square_len *= 0.9;
+      square_data.scales.push([square_len,1.0,square_len]);
+      let col_grey = grid_pt[0] > 0.4 ? 0.7 : 0.2;
+      //let col_grey = grid_pt[1];
+      //let col_grey = world_pos[0];
+      square_data.colors.push([col_grey,col_grey,col_grey]);
+    }
+  }
+  console.log('validity grid:', grid);
+
+  let square_res = generate_mesh(2, 2, gen_square_sample);
+  let square_drawable = new Blob(square_res[0], square_res[1], square_res[2]);
+  square_drawable.create();
+  setup_instances(square_drawable, square_data);
+  return square_drawable;
+}
+
+function generate_buildings(grid) {
 }
 
 function run_system(map_sampler) {
@@ -264,7 +337,12 @@ function run_system(map_sampler) {
   road_drawable.create();
   setup_instances(road_drawable, roads);
 
-  let drawables = [road_drawable];
+  let validity_grid = generate_validity_grid(map_sampler, highways);
+  let debug_grid_drawable = generate_grid_drawable(validity_grid);
+
+  let building_drawable = generate_buildings(validity_grid);
+
+  let drawables = [road_drawable, debug_grid_drawable, building_drawable];
 
   return drawables;
 }
