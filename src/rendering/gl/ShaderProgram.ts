@@ -1,5 +1,5 @@
 import {vec3, vec4, mat4, mat3} from 'gl-matrix';
-import Drawable from './Drawable';
+import {Drawable} from './Drawable';
 import {gl} from '../../globals';
 
 var activeProgram: WebGLProgram = null;

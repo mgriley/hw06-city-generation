@@ -1,5 +1,5 @@
 import {vec3, vec4} from 'gl-matrix';
-import Drawable from '../rendering/gl/Drawable';
+import {Drawable, set_instance_data} from '../rendering/gl/Drawable';
 import {gl} from '../globals';
 
 function generate_mesh(samples_x, samples_y, attr_func): any {
@@ -69,8 +69,8 @@ class Blob extends Drawable {
 
     this.generateIdx();
     this.generatePos();
-    this.generateCol();
     this.generateNor();
+    this.generateCol();
     this.generateTranslate();
     this.generateRotate();
     this.generateScale();
@@ -90,19 +90,7 @@ class Blob extends Drawable {
 
   setInstanceVBOs(offsets: Float32Array, rotations: Float32Array,
     scales: Float32Array, colors: Float32Array) {
-    this.colors = colors;
-    this.offsets = offsets;
-    this.rotations = rotations;
-    this.scales = scales;
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufCol);
-    gl.bufferData(gl.ARRAY_BUFFER, this.colors, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufTranslate);
-    gl.bufferData(gl.ARRAY_BUFFER, this.offsets, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufRotate);
-    gl.bufferData(gl.ARRAY_BUFFER, this.rotations, gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.bufScale);
-    gl.bufferData(gl.ARRAY_BUFFER, this.scales, gl.STATIC_DRAW);
+    set_instance_data(this, offsets, rotations, scales, colors);
   }
 };
 

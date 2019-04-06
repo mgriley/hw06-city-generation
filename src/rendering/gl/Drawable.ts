@@ -1,6 +1,6 @@
 import {gl} from '../../globals';
 
-abstract class Drawable {
+export abstract class Drawable {
   count: number = 0;
 
   bufIdx: WebGLBuffer;
@@ -145,4 +145,20 @@ abstract class Drawable {
   }
 };
 
-export default Drawable;
+export function set_instance_data(obj: any, offsets: Float32Array, rotations: Float32Array,
+  scales: Float32Array, colors: Float32Array) {
+  obj.colors = colors;
+  obj.offsets = offsets;
+  obj.rotations = rotations;
+  obj.scales = scales;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, obj.bufCol);
+  gl.bufferData(gl.ARRAY_BUFFER, obj.colors, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, obj.bufTranslate);
+  gl.bufferData(gl.ARRAY_BUFFER, obj.offsets, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, obj.bufRotate);
+  gl.bufferData(gl.ARRAY_BUFFER, obj.rotations, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, obj.bufScale);
+  gl.bufferData(gl.ARRAY_BUFFER, obj.scales, gl.STATIC_DRAW);
+}
+

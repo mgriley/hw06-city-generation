@@ -38,7 +38,7 @@ function regenerate_city(gl: WebGL2RenderingContext, canvas, renderer: OpenGLRen
 
   let map_data = new Float32Array(4 * RENDER_TEX_LEN * RENDER_TEX_LEN);
   gl.readPixels(0, 0, RENDER_TEX_LEN, RENDER_TEX_LEN, gl.RGBA, gl.FLOAT, map_data);
-  console.log(map_data);
+  //console.log(map_data);
 
   // returns [land_height, pop_den]
   function map_sampler(x, y) {

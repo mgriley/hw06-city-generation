@@ -195,13 +195,13 @@ function generate_grid_drawable(grid) {
       let square_len = GRID_WORLD_LEN / grid.length;
       square_len *= 0.9;
       square_data.scales.push([square_len,1.0,square_len]);
-      let col_grey = grid_pt[0] > 0.4 ? 0.7 : 0.2;
-      //let col_grey = grid_pt[1];
+      //let col_grey = grid_pt[0] > 0.4 ? 0.7 : 0.2;
+      let col_grey = grid_pt[1];
       //let col_grey = world_pos[0];
       square_data.colors.push([col_grey,col_grey,col_grey]);
     }
   }
-  console.log('validity grid:', grid);
+  //console.log('validity grid:', grid);
 
   let square_res = generate_mesh(2, 2, gen_square_sample);
   let square_drawable = new Blob(square_res[0], square_res[1], square_res[2]);
@@ -210,7 +210,65 @@ function generate_grid_drawable(grid) {
   return square_drawable;
 }
 
+function gen_cylinder(nx, ny): any {
+  let theta = nx * 2.0 * Math.PI;
+  let xz = [Math.cos(theta), Math.sin(theta)];
+  let pos = v3(
+    0.5*xz[0],
+    ny,
+    0.5*xz[1]
+  );
+  let nor = v3(xz[0], 0, xz[1]);
+  return [pos, nor];
+}
+
+function create_building_drawable() {
+  let res = generate_mesh(40,40,gen_cylinder);
+  let drawable = new Blob(res[0], res[1], res[2]);
+  drawable.create();
+  return drawable;
+}
+
+function lerp(min, max, amt) {
+  return min + amt * (max - min);
+}
+
 function generate_buildings(grid) {
+  let building_data = {
+    positions: [],
+    rotations: [],
+    scales: [],
+    colors: []
+  };
+
+  // generate random valid points and place buildings in the scene
+  let num_iters = 500;
+  for (let i = 0; i < num_iters; ++i) {
+    let rx = Math.floor(grid.length * Math.random());
+    let ry = Math.floor(grid.length * Math.random());
+    let grid_pt = grid[rx][ry];
+    let land_h = grid_pt[0];
+    let pop_den = grid_pt[1];
+
+    if (land_h < 0.6) {
+      continue;
+    }
+    let world_pos = grid_pt[2];
+
+    let base_pos = world_pos;
+    let tower_h = lerp(0.2, 3.0, pop_den*pop_den);
+    let tower_w = lerp(0.125*tower_h, 0.25*tower_h, Math.random());
+
+    building_data.positions.push([base_pos[0], 0, base_pos[1]]);
+    building_data.rotations.push([0,0,1,0]);
+    building_data.scales.push([tower_w,tower_h,tower_w]);
+    building_data.colors.push([1,0,0]);
+  }
+
+  
+  let building_drawable = create_building_drawable();
+  setup_instances(building_drawable, building_data);
+  return building_drawable;
 }
 
 function run_system(map_sampler) {
@@ -301,19 +359,6 @@ function run_system(map_sampler) {
     scales: [],
     colors: []
   };
-  // for debug
-  /*
-  let seed_start = seed_road[0];
-  let seed_end = seed_road[1];
-  roads.positions.push([seed_start[0], seed_start[1], 0]);
-  roads.rotations.push([1,0,0,0]);
-  roads.scales.push([0.1,0.1,0.1]);
-  roads.colors.push([1.0,0.0,0.0]);
-  roads.positions.push([seed_end[0], seed_end[1], 0]);
-  roads.rotations.push([1,0,0,0]);
-  roads.scales.push([0.1,0.1,0.1]);
-  roads.colors.push([1.0,0.0,0.0]);
-   */
 
   for (let i = 0; i < highways.length; ++i) {
     let highway = highways[i];
@@ -342,7 +387,8 @@ function run_system(map_sampler) {
 
   let building_drawable = generate_buildings(validity_grid);
 
-  let drawables = [road_drawable, debug_grid_drawable, building_drawable];
+  let drawables = [
+    road_drawable, debug_grid_drawable, building_drawable];
 
   return drawables;
 }
