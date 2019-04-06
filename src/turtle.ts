@@ -263,9 +263,9 @@ function generate_buildings(grid) {
     building_data.positions.push([base_pos[0], 0, base_pos[1]]);
     building_data.rotations.push([0,0,1,0]);
     building_data.scales.push([tower_w,tower_h,tower_w]);
-    building_data.colors.push([1,0,0]);
+    let col_offset = lerp(0.2,0.43,Math.random());
+    building_data.colors.push([col_offset,0.23,0.25]);
   }
-
   
   let building_drawable = create_building_drawable();
   setup_instances(building_drawable, building_data);
@@ -376,7 +376,7 @@ function run_system(map_sampler) {
     let cur_pop_den = cur_sample[1];
 
     // TODO the higher the pop, the more branches
-    //let num_branches = lerp(1, 4, Math.random());
+    //let num_branches = lerp(1, 3, Math.random());
     let num_branches = 3;
     // make the branches emanate from the center at roughly equal angle spacing
     let angle_spacing = 2.0 * Math.PI / (1.0 + num_branches);
@@ -386,9 +386,7 @@ function run_system(map_sampler) {
       //let angle_offset = (0.5 * Math.PI) * (2.0 * (Math.random() - 0.5)); 
       let angle_offset = 0.0;
       let new_angle = start_angle + j*angle_spacing + angle_offset;
-      let min_len = 0.3;
-      let max_len = 1.0;
-      let new_len = min_len + Math.random() * (max_len - min_len);
+      let new_len = lerp(0.3,1.0,Math.random());
       let next_pos = vec2.add(v2e(), end_pos,
         vec2.scale(v2e(),
           v2(Math.cos(new_angle), Math.sin(new_angle)), new_len));

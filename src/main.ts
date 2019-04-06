@@ -96,7 +96,7 @@ function main() {
   // Later, we can import `gl` from `globals.ts` to access it
   setGL(gl);
 
-  const camera = new Camera(vec3.fromValues(10, 10, -10), vec3.fromValues(0, 0, 0));
+  const camera = new Camera(vec3.fromValues(-2, 6, -10), vec3.fromValues(0, 0, 0));
   //camera.controls.eye = [10, 10, -10];
 
   const renderer = new OpenGLRenderer(canvas, window.innerWidth, window.innerHeight);
