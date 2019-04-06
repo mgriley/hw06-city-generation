@@ -65,7 +65,8 @@ export class OpenGLRenderer {
     instanced_prog: ShaderProgram,
     screen_quad: Drawable,
     plane_drawable: Drawable,
-    instanced_drawables: Array<Drawable>
+    scene_drawables: Array<Drawable>,
+    scene_debug_drawables
   ) {
     let model = mat4.create();
     let viewProj = mat4.create();
@@ -83,6 +84,7 @@ export class OpenGLRenderer {
       shader.setControls(controls);
       shader.setModelMatrix(model);
       shader.setViewProjMatrix(viewProj);
+      shader.setDimensions(this.canvas.width, this.canvas.height);
       // Note: texture unit 0 is active by default
       shader.setTextureUnit(0);
     }
@@ -102,8 +104,11 @@ export class OpenGLRenderer {
 
     elevation_prog.draw(plane_drawable);
 
-    instanced_drawables = controls.bool_a ? [] : instanced_drawables;
-    for (let drawable of instanced_drawables) {
+    scene_drawables = controls.bool_a ? [] : scene_drawables;
+    scene_debug_drawables = !controls.bool_b ? [] : scene_debug_drawables;
+    let output_drawables = []
+    output_drawables.push(...scene_drawables, ...scene_debug_drawables);
+    for (let drawable of output_drawables) {
       instanced_prog.draw(drawable);
     }
   }

@@ -193,7 +193,8 @@ function generate_grid_drawable(grid) {
       square_data.positions.push([world_pos[0], 0.1, world_pos[1]]);
       square_data.rotations.push([0,0,1,0]);
       let square_len = GRID_WORLD_LEN / grid.length;
-      square_len *= 0.9;
+      // this allows you to see through the grid
+      //square_len *= 0.95;
       square_data.scales.push([square_len,1.0,square_len]);
       //let col_grey = grid_pt[0] > 0.4 ? 0.7 : 0.2;
       let col_grey = grid_pt[1];
@@ -271,13 +272,55 @@ function generate_buildings(grid) {
   return building_drawable;
 }
 
+// returns [drawables, debug_drawables]
 function run_system(map_sampler) {
 
   let highways = [];
 
-  let seed_road = [v2(0,0), v2(1.0,0.0)];
-  let queue = [seed_road];
-  let num_iterations = 100;
+  // for road-generating BFS
+  let queue = [];
+
+  // gen some seed roads that aren't in water
+  let max_num_seed_iters = 60;
+  let desired_num_seeds = 10;
+  for (let i = 0; i < max_num_seed_iters && queue.length < desired_num_seeds; ++i) {
+    let start_x = TERRAIN_SCALE * (Math.random() - 0.5);
+    let start_y = TERRAIN_SCALE * (Math.random() - 0.5);
+    let start_pos = v2(start_x, start_y);
+    
+    // confirm not in water
+    let terr_sample = sample_at_world_pos(map_sampler, start_pos);
+    let land_h = terr_sample[0];
+    if (land_h < 0.5) {
+      continue;
+    }
+
+    // confirm far from others
+    let too_close = false;
+    for (let j = 0; j < queue.length; ++j) {
+      let other_road = queue[j];
+      let dist = vec2.distance(other_road[0], start_pos);
+      if (dist < 2.0) {
+        too_close = true;
+        break;
+      }
+    }
+    if (too_close) {
+      continue;
+    }
+
+    let end_pos = vec2.add(v2e(), start_pos, v2(1.0,0.0));
+    let road = [start_pos, end_pos];
+    queue.push(road);    
+  }
+  // fallback if no points found
+  if (queue.length === 0) {
+    let seed_road = [v2(0,0), v2(1.0,0.0)];
+    queue.push(seed_road);
+  }
+
+  // use BFS to continue the road system
+  let num_iterations = 600;
   for (let i = 0; i < num_iterations && queue.length > 0; ++i) {
     // TODO - will be slow if large queue
     let road = queue.shift();
@@ -312,15 +355,18 @@ function run_system(map_sampler) {
       continue;
     }
 
-    // TODO
-    /*
-    let next_sample = sample_at_world_pos(map_sampler, next_pos);
+    // skip if goes into water
+    let next_sample = sample_at_world_pos(map_sampler, end_pos);
     let next_land_h = next_sample[0];
-    if (next_land_h < 0.4) {
-      // in the water, skip
+    if (next_land_h < 0.5) {
       continue;
     }
-    */
+    // skip if out of terrain bounds
+    let terr_bound = TERRAIN_SCALE / 2.0;
+    if (!(-terr_bound <= end_pos[0] && end_pos[0] <= terr_bound
+      && -terr_bound <= end_pos[1] && end_pos[1] <= terr_bound)) {
+      continue;
+    }
 
     highways.push(road);
     
@@ -330,9 +376,7 @@ function run_system(map_sampler) {
     let cur_pop_den = cur_sample[1];
 
     // TODO the higher the pop, the more branches
-    let min_num_branches = 1;
-    let max_num_branches = 3;
-    //let num_branches = min_num_branches + Math.random() * (max_num_branches - min_num_branches);
+    //let num_branches = lerp(1, 4, Math.random());
     let num_branches = 3;
     // make the branches emanate from the center at roughly equal angle spacing
     let angle_spacing = 2.0 * Math.PI / (1.0 + num_branches);
@@ -373,7 +417,7 @@ function run_system(map_sampler) {
     roads.rotations.push([0,-1,0,angle]);
     let road_width = 0.02;
     roads.scales.push([len,1.0,road_width]);
-    let road_grey = 0.2;
+    let road_grey = 0.3;
     roads.colors.push([road_grey,road_grey,road_grey]);
   }
 
@@ -387,21 +431,15 @@ function run_system(map_sampler) {
 
   let building_drawable = generate_buildings(validity_grid);
 
-  let drawables = [
-    road_drawable, debug_grid_drawable, building_drawable];
+  let drawables = [road_drawable, building_drawable];
+  let debug_drawables = [debug_grid_drawable];
 
-  return drawables;
+  return [drawables, debug_drawables];
 }
 
-// returns a list of drawables to render with the instanced shader
+// returns [drawables, debug_drawables]
 export function generate_scene(map_sampler) {
-  let drawables = [];
-
-  let gen_drawables = run_system(map_sampler);
-
-  drawables.push(...gen_drawables);
-
-  return drawables;
+  return run_system(map_sampler);
 }
 
 // TODO - remove

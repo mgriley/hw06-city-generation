@@ -43,8 +43,8 @@ void main()
   //fs_Nor = normalize(vs_Nor.xyz);
   fs_Nor = vec3(0.0,1.0,0.0);
 
-  vec3 land_color = vec3(0.0,0.5,0.0);
-  vec3 water_color = vec3(0.0,0.0,0.5);
+  vec3 land_color = vec3(0.17,0.52,0.21);
+  vec3 water_color = vec3(0.01,0.53,0.66);
   vec3 col = mix(water_color, land_color, amt_land);
 
   //col = vec3(land_h);

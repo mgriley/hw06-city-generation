@@ -70,6 +70,7 @@ class ShaderProgram {
     this.unifEye   = gl.getUniformLocation(this.prog, "u_Eye");
     this.unifRef   = gl.getUniformLocation(this.prog, "u_Ref");
     this.unifUp   = gl.getUniformLocation(this.prog, "u_Up");
+    this.unifDimensions = gl.getUniformLocation(this.prog, "u_Dims");
 
     this.unifTex = gl.getUniformLocation(this.prog, "u_tex");
     this.unifBoolControls = gl.getUniformLocation(this.prog, "u_bin");

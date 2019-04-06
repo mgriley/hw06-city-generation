@@ -24,6 +24,7 @@ const controls = {
 let screenQuad: ScreenQuad;
 let planeDrawable: Plane;
 let scene_drawables;
+let scene_debug_drawables;
 let time: number = 0.0;
 
 function regenerate_city(gl: WebGL2RenderingContext, canvas, renderer: OpenGLRenderer, inputs_shader: ShaderProgram) {
@@ -56,7 +57,9 @@ function regenerate_city(gl: WebGL2RenderingContext, canvas, renderer: OpenGLRen
   console.log('(-1, 1): ', map_sampler(-1, 1));
   console.log('(1, 1): ', map_sampler(1, 1));
   
-  scene_drawables = generate_scene(map_sampler);
+  let all_drawables = generate_scene(map_sampler);
+  scene_drawables = all_drawables[0];
+  scene_debug_drawables = all_drawables[1];
 }
 
 function main() {
@@ -138,7 +141,8 @@ function main() {
       instancedShader,
       screenQuad,
       planeDrawable,
-      scene_drawables
+      scene_drawables,
+      scene_debug_drawables
     );
 
     time++;
